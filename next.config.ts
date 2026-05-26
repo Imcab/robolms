@@ -6,7 +6,7 @@ const nextConfig = {
   },
   // Si tu repositorio se llama "RoboLMS", descomenta las líneas de abajo
   // y pon el nombre exacto de tu repositorio para que los estilos no se rompan:
-  // basePath: '/RoboLMS',
+  basePath: '/robolms',
 };
 
 module.exports = nextConfig;
