@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { ChevronDown, ChevronUp, ClipboardList, GraduationCap, X, Trophy } from "lucide-react";
 
-import 'react-quill/dist/quill.snow.css';
+
+import "react-quill-new/dist/quill.snow.css";
 
 export default function TabContenido({ courseId }: { courseId: string }) {
   const [modules, setModules] = useState<any[]>([]);

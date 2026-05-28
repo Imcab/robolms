@@ -22,24 +22,45 @@ export default function TabResumen({ courseId }: { courseId: string }) {
         .select('*').or(`course_id.eq.${courseId},course_id.is.null`)
         .order('created_at', { ascending: false }).limit(2);
 
-      // 2. Calcular Días Laborales Restantes
+      // 2. Calcular Días Laborales Restantes (CON LA LÓGICA EXACTA DEL CALENDARIO)
       let remaining = 0;
-      if (course?.end_date) {
-        const end = new Date(course.end_date);
+      if (course?.start_date && course?.end_date) {
+        const startDate = new Date(course.start_date);
+        const endDate = new Date(course.end_date);
+        
+        // Ajuste de Timezone vital para evitar que robe días
+        startDate.setMinutes(startDate.getMinutes() + startDate.getTimezoneOffset());
+        endDate.setMinutes(endDate.getMinutes() + endDate.getTimezoneOffset());
+
         const today = new Date();
-        let cur = new Date(today);
-        while (cur <= end) {
-          if (cur.getDay() !== 0 && cur.getDay() !== 6) remaining++;
-          cur.setDate(cur.getDate() + 1);
+        today.setHours(0, 0, 0, 0);
+
+        const getWorkingDays = (start: Date, end: Date) => {
+          let count = 0;
+          let cur = new Date(start);
+          while (cur <= end) {
+            const dayOfWeek = cur.getDay();
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) count++;
+            cur.setDate(cur.getDate() + 1);
+          }
+          return count;
+        };
+
+        if (today > endDate) {
+          remaining = 0;
+        } else if (today < startDate) {
+          remaining = getWorkingDays(startDate, endDate); // Curso aún no empieza, muestra todos los días
+        } else {
+          remaining = getWorkingDays(today, endDate); // Curso en progreso
         }
       }
 
-      // 3. Calcular Calificación Actual (Ponderada)
-      // Traemos módulos, sus tareas y las notas del alumno
+      // 3. Calcular Calificación Actual (Ponderada) - AHORA FILTRADA POR USUARIO
       const { data: structure } = await supabase
         .from('modules')
-        .select('weight_percentage, tasks(id, weight_percentage, submissions(score))')
-        .eq('course_id', courseId);
+        .select('weight_percentage, tasks(weight_percentage, submissions(score))')
+        .eq('course_id', courseId)
+        .eq('tasks.submissions.student_id', session.user.id); // <- ¡FALTABA ESTE FILTRO!
 
       let totalWeightedScore = 0;
       if (structure) {
