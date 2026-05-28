@@ -111,7 +111,7 @@ export default function DashboardHome() {
       <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            ¡Hola, {userRole === "Administrador" ? "Profesor" : "Estudiante"}! Bienvenido a <span className="text-red-600">RoboLMS</span>
+            ¡Hola, {userRole === "Administrador" ? "Profesor" : "Estudiante"}! Bienvenido a <span className="text-red-600">rmo</span>
           </h1>
           <p className="text-sm text-gray-500 font-medium">
             {userRole === "Administrador" 

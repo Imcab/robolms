@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
-import { ChevronDown, ChevronUp, ClipboardList, GraduationCap, X, Trophy } from "lucide-react";
+import { ChevronDown, ChevronUp, ClipboardList, GraduationCap, X, Trophy, Link as LinkIcon, ExternalLink, Rocket } from "lucide-react";
+import { SiGoogledrive, SiGithub } from "react-icons/si";
 
-
-import "react-quill-new/dist/quill.snow.css";
+import 'react-quill-new/dist/quill.snow.css';
 
 export default function TabContenido({ courseId }: { courseId: string }) {
   const [modules, setModules] = useState<any[]>([]);
@@ -33,11 +33,23 @@ export default function TabContenido({ courseId }: { courseId: string }) {
     fetchData();
   }, [courseId, previewTask]);
 
+  const renderIcon = (task: any) => {
+    const iconSize = 20; 
+    if (task.link_url) {
+      if (task.link_url.includes('github.com')) return <div className="p-2 bg-gray-900 text-white rounded-lg shadow-sm"><SiGithub size={iconSize} /></div>;
+      if (task.link_url.includes('drive.google.com')) return <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg shadow-sm border border-yellow-100"><SiGoogledrive size={iconSize} /></div>;
+      return <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shadow-sm border border-blue-100"><LinkIcon size={iconSize} /></div>;
+    }
+    if (task.is_exam) return <div className="p-2 bg-purple-50 text-purple-600 rounded-lg shadow-sm border border-purple-100"><Rocket size={iconSize} /></div>;
+    if (task.is_graded) return <div className="p-2 bg-red-50 text-red-600 rounded-lg shadow-sm border border-red-100"><ClipboardList size={iconSize} /></div>;
+    return <div className="p-2 bg-gray-100 text-gray-500 rounded-lg shadow-sm border border-gray-200"><GraduationCap size={iconSize} /></div>;
+  };
+
   return (
     <div className="space-y-6 max-w-5xl">
       
       {/* WIDGET SUPERIOR DE NOTA */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between">
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-amber-50 text-amber-600 rounded"><Trophy size={20} /></div>
           <div>
@@ -53,30 +65,55 @@ export default function TabContenido({ courseId }: { courseId: string }) {
 
       {/* LISTA DE MÓDULOS */}
       {modules.map(mod => (
-        <div key={mod.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm mb-4">
+        <div key={mod.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-4">
           <div onClick={() => setExpandedModules(prev => ({ ...prev, [mod.id]: !prev[mod.id] }))} className="flex items-center justify-between p-5 bg-gray-50 cursor-pointer border-b border-gray-100 hover:bg-gray-100 transition-colors">
             <h3 className="font-bold text-gray-900 flex items-center gap-2 text-lg">
               {expandedModules[mod.id] ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
               {mod.name}
             </h3>
-            <span className="text-sm font-bold text-gray-700 bg-white px-3 py-1 rounded border border-gray-200 shadow-sm">
-              Módulo: {mod.weight_percentage}% del curso
+            <span className="text-sm font-bold text-gray-700 bg-white px-3 py-1 rounded-md border border-gray-200 shadow-sm">
+              Módulo: {mod.weight_percentage}%
             </span>
           </div>
 
           {expandedModules[mod.id] && (
             <div className="p-3 bg-white space-y-2">
               {mod.tasks.map((task: any) => (
-                <div key={task.id} onClick={() => setPreviewTask(task)} className="flex items-center justify-between p-3 border border-gray-100 rounded-md cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all group">
+                <div 
+                  key={task.id} 
+                  onClick={() => {
+                    if (task.link_url) window.open(task.link_url, '_blank');
+                    else if (!task.is_exam) setPreviewTask(task);
+                  }} 
+                  className={`flex items-center justify-between p-3 border border-gray-100 rounded-lg transition-all group ${
+                    task.is_exam ? 'opacity-90' : 'cursor-pointer hover:border-gray-300 hover:shadow-sm'
+                  }`}
+                >
                   <div className="flex items-center gap-4">
-                    {task.is_graded ? <div className="p-2 bg-red-50 text-red-600 rounded"><ClipboardList size={20} /></div> : <div className="p-2 bg-gray-100 text-gray-500 rounded"><GraduationCap size={20} /></div>}
+                    {renderIcon(task)}
                     <div>
-                      <p className="text-sm font-bold text-gray-900">{task.title}</p>
-                      {task.is_graded && task.due_date && <p className="text-xs text-gray-500 mt-1 font-semibold">Cierre: {new Date(task.due_date).toLocaleString('es-MX')}</p>}
+                      <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                        {task.title}
+                        {task.link_url && <ExternalLink size={14} className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                      </p>
+                      {(task.is_graded || task.is_exam) && task.due_date && (
+                        <p className="text-xs text-gray-500 mt-1 font-semibold">Fecha programada: {new Date(task.due_date).toLocaleString('es-MX')}</p>
+                      )}
                     </div>
                   </div>
-                  <span className={`text-xs font-bold px-2.5 py-1.5 rounded ${task.is_graded ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
-                    {task.is_graded ? `${task.weight_percentage}% del módulo` : 'Material de apoyo'}
+                  
+                  <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg ${
+                    task.link_url ? 'bg-blue-50 border border-blue-100 text-blue-700' : 
+                    task.is_exam ? 'bg-purple-50 border border-purple-100 text-purple-700' : 
+                    task.is_graded ? 'bg-red-50 border border-red-100 text-red-700' : 
+                    'bg-gray-100 border border-gray-200 text-gray-600'
+                  }`}>
+                    {
+                      task.link_url ? 'Enlace Externo' : 
+                      task.is_exam ? `Examen: ${task.weight_percentage}%` : 
+                      task.is_graded ? `Práctica: ${task.weight_percentage}%` : 
+                      'Material de apoyo'
+                    }
                   </span>
                 </div>
               ))}
@@ -86,7 +123,7 @@ export default function TabContenido({ courseId }: { courseId: string }) {
         </div>
       ))}
 
-      {/* MODAL INMERSIVO CALCADO AL 100% DEL TABPLAN */}
+      {/* MODAL INMERSIVO */}
       {previewTask && (
         <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-2 backdrop-blur-md">
           <div className="bg-white w-[98vw] h-[98vh] rounded shadow-2xl overflow-hidden flex flex-col">
@@ -103,6 +140,7 @@ export default function TabContenido({ courseId }: { courseId: string }) {
                     {previewTask.is_graded ? `Evaluación: ${previewTask.weight_percentage}%` : 'Material de lectura'} 
                     {previewTask.is_graded && previewTask.due_date && ` • Cierre: ${new Date(previewTask.due_date).toLocaleString('es-MX')}`}
                   </p>
+                  
                   <div className="ql-snow">
                     <div className="ql-editor !p-0 text-gray-900 whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: previewTask.description || '<p>No hay descripción detallada.</p>' }} />
                   </div>

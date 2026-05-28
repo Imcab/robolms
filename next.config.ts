@@ -1,12 +1,16 @@
 /** @type {import('next').NextConfig} */
+
+const isProd = process.env.NODE_ENV === 'production';
+
 const nextConfig = {
-  output: 'export', // <- CRÍTICO: Le dice a Next.js que genere HTML/CSS/JS puros
+  output: 'export',
   images: {
-    unoptimized: true, // <- Evita que Next.js intente optimizar imágenes en el servidor
+    unoptimized: true,
   },
-  // Si tu repositorio se llama "RoboLMS", descomenta las líneas de abajo
-  // y pon el nombre exacto de tu repositorio para que los estilos no se rompan:
-  basePath: '/robolms',
+
+  basePath: isProd ? '/robolms' : '',
+
+  assetPrefix: isProd ? '/robolms' : '',
 };
 
 module.exports = nextConfig;
